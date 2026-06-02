@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tinygame Project - Member Forks</title>
+    <title>Member Projects & Forks</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -65,6 +65,15 @@
             margin-bottom: 1.5rem;
             border-bottom: 1px solid var(--card-border);
             padding-bottom: 0.5rem;
+        }
+        
+        .project-title {
+            font-size: 2.5rem;
+            border: none;
+            margin-bottom: 0;
+            text-align: center;
+            text-transform: capitalize;
+            color: #e2e8f0;
         }
 
         .forks-grid {
@@ -149,70 +158,66 @@
             background: rgba(239, 68, 68, 0.1);
             border-radius: 8px;
         }
+        
+        hr.divider {
+            border: 0;
+            height: 1px;
+            background: var(--card-border);
+            margin: 4rem 0;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Tinygame</h1>
-        <p>Multiplayer Bomb-Passing Game</p>
+        <h1>Our Projects</h1>
+        <p>Member Repositories and Forks</p>
     </header>
 
-    <main>
-        <section style="margin-bottom: 3rem;">
-            <h2>Original Project</h2>
-            <div id="original-repo-container" class="forks-grid">
-                <div class="loading">Loading original repository...</div>
-            </div>
-        </section>
-
-        <section>
-            <h2>Member Forks</h2>
-            <div id="forks-container" class="forks-grid">
-                <div class="loading">Fetching forks...</div>
-            </div>
-        </section>
+    <main id="projects-container">
+        <!-- Projects will be dynamically injected here -->
     </main>
 
     <script>
-        // GitHub Repository details
-        // If the repository name is different, change it here:
-        const repoOwner = 'neoyoshi2000'; 
-        const repoName = 'tinygame';
+        // List of all repositories to display
+        const targetRepos = [
+            { owner: 'neoyoshi2000', repo: 'tinygame' },
+            { owner: 'u-akira', repo: 'logic-table-tennis' }
+        ];
 
-        async function fetchOriginalRepo() {
-            const container = document.getElementById('original-repo-container');
-            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}`;
+        async function fetchOriginalRepo(owner, repo, elementId) {
+            const container = document.getElementById(elementId);
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
 
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error(`API Error: ${response.status}`);
                 
-                const repo = await response.json();
+                const repoData = await response.json();
                 
                 container.innerHTML = `
                     <div class="card" style="border-color: var(--accent-color);">
                         <div class="card-header">
-                            <a href="${repo.owner.html_url}" target="_blank" rel="noopener noreferrer">
-                                <img src="${repo.owner.avatar_url}" alt="${repo.owner.login}" class="avatar">
+                            <a href="${repoData.owner.html_url}" target="_blank" rel="noopener noreferrer">
+                                <img src="${repoData.owner.avatar_url}" alt="${repoData.owner.login}" class="avatar">
                             </a>
                             <div class="user-info">
-                                <h3><a href="${repo.owner.html_url}" target="_blank" rel="noopener noreferrer">${repo.owner.login}</a></h3>
+                                <h3><a href="${repoData.owner.html_url}" target="_blank" rel="noopener noreferrer">${repoData.owner.login}</a></h3>
                                 <span style="font-size: 0.85rem; color: #94a3b8;">Original Creator</span>
                             </div>
                         </div>
-                        <a href="${repo.html_url}" class="repo-link" target="_blank" rel="noopener noreferrer">View Original Repository</a>
+                        <a href="${repoData.html_url}" class="repo-link" target="_blank" rel="noopener noreferrer">View Original Repository</a>
                     </div>
                 `;
             } catch (error) {
-                console.error("Failed to fetch original repo:", error);
+                console.error(`Failed to fetch original repo ${owner}/${repo}:`, error);
                 container.innerHTML = `<div class="error-msg">Failed to load original repository details.</div>`;
             }
         }
 
-        async function fetchForks() {
-            const container = document.getElementById('forks-container');
-            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/forks?sort=newest`;
+        async function fetchForks(owner, repo, elementId) {
+            const container = document.getElementById(elementId);
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/forks?sort=newest`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -251,21 +256,65 @@
                 });
 
             } catch (error) {
-                console.error("Failed to fetch forks:", error);
+                console.error(`Failed to fetch forks for ${owner}/${repo}:`, error);
                 container.innerHTML = `
                     <div class="error-msg">
                         Failed to load forks.<br>
-                        Make sure the repository '${repoOwner}/${repoName}' exists and is public.
+                        Make sure the repository '${owner}/${repo}' exists and is public.
                     </div>
                 `;
             }
         }
 
-        // Fetch the data when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchOriginalRepo();
-            fetchForks();
-        });
+        function renderProjects() {
+            const container = document.getElementById('projects-container');
+            container.innerHTML = ''; // Clear main container
+
+            targetRepos.forEach((project, index) => {
+                const { owner, repo } = project;
+                const origId = `orig-${owner}-${repo}`;
+                const forksId = `forks-${owner}-${repo}`;
+                
+                const projectSection = document.createElement('div');
+                
+                // Add a divider if it's not the first project
+                const divider = index > 0 ? '<hr class="divider">' : '';
+
+                // Replace hyphens with spaces for a nicer title display
+                const displayTitle = repo.replace(/-/g, ' ');
+
+                projectSection.innerHTML = `
+                    ${divider}
+                    <div style="margin-bottom: 4rem;">
+                        <h2 class="project-title">${displayTitle}</h2>
+                        <p style="text-align: center; color: #94a3b8; margin-bottom: 2rem;">by ${owner}</p>
+                        
+                        <section style="margin-bottom: 3rem;">
+                            <h2>Original Project</h2>
+                            <div id="${origId}" class="forks-grid">
+                                <div class="loading">Loading original repository...</div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h2>Member Forks</h2>
+                            <div id="${forksId}" class="forks-grid">
+                                <div class="loading">Fetching forks...</div>
+                            </div>
+                        </section>
+                    </div>
+                `;
+                
+                container.appendChild(projectSection);
+
+                // Fetch data for this project
+                fetchOriginalRepo(owner, repo, origId);
+                fetchForks(owner, repo, forksId);
+            });
+        }
+
+        // Initialize when the DOM is ready
+        document.addEventListener('DOMContentLoaded', renderProjects);
     </script>
 </body>
 </html>
